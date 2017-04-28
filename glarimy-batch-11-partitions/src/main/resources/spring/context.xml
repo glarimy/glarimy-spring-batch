@@ -1,0 +1,36 @@
+<beans xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+           http://www.springframework.org/schema/batch
+           http://www.springframework.org/schema/batch/spring-batch-3.0.xsd">
+	<bean id="jobLauncher"
+		class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+		<property name="jobRepository" ref="jobRepository" />
+	</bean>
+	<bean id="jobRepository"
+		class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean">
+		<property name="transactionManager" ref="transactionManager" />
+	</bean>
+	<bean id="transactionManager"
+		class="org.springframework.batch.support.transaction.ResourcelessTransactionManager" />
+	<bean id="reader" scope="step" class="com.glarimy.spring.batch.ArrayReader">
+		<property name="index" value="#{stepExecutionContext['index']}" />
+	</bean>
+	<bean id="writer" class="com.glarimy.spring.batch.ConsoleWriter" />
+	<bean id="partitioner" scope="step" class='com.glarimy.spring.batch.ArrayPartitioner' />
+	<bean id="taskExecutor" class="org.springframework.core.task.SimpleAsyncTaskExecutor" />
+	<job id="job" xmlns="http://www.springframework.org/schema/batch">
+		<step id="master">
+			<partition step="slave" partitioner="partitioner">
+				<handler grid-size="2" task-executor="taskExecutor" />
+			</partition>
+		</step>
+	</job>
+	<step id="slave" xmlns="http://www.springframework.org/schema/batch">
+		<tasklet>
+			<chunk reader="reader" writer="writer" commit-interval="1" />
+		</tasklet>
+	</step>
+</beans>

@@ -1,0 +1,75 @@
+<beans xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+           http://www.springframework.org/schema/batch
+           http://www.springframework.org/schema/batch/spring-batch-3.0.xsd">
+	<bean id="jobLauncher"
+		class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+		<property name="jobRepository" ref="jobRepository" />
+	</bean>
+	<bean id="jobRepository"
+		class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean">
+		<property name="transactionManager" ref="transactionManager" />
+	</bean>
+	<bean id="transactionManager"
+		class="org.springframework.batch.support.transaction.ResourcelessTransactionManager" />
+
+	<bean id="reader" class="org.springframework.batch.item.file.FlatFileItemReader">
+		<property name="resource" value="classpath:data/input" />
+		<property name="lineMapper">
+			<bean
+				class="org.springframework.batch.item.file.mapping.PassThroughLineMapper"></bean>
+		</property>
+	</bean>
+	<bean id='processor' class="com.glarimy.spring.batch.LineProcessor" />
+	<bean id="writer" class="org.springframework.batch.item.file.FlatFileItemWriter">
+		<property name="resource" value="file:data/output" />
+		<property name="lineAggregator">
+			<bean
+				class="org.springframework.batch.item.file.transform.PassThroughLineAggregator"></bean>
+		</property>
+	</bean>
+	<bean id='chunkInterceptor' class="com.glarimy.spring.batch.ChunkInterceptor" />
+	<bean id='stepInterceptor' class="com.glarimy.spring.batch.StepInterceptor" />
+	<bean id='readInterceptor' class="com.glarimy.spring.batch.ItemReadInterceptor" />
+	<bean id='processorInterceptor' class="com.glarimy.spring.batch.ProcessorInterceptor" />
+	<bean id='writeInterceptor' class="com.glarimy.spring.batch.ItemWriteInterceptor" />
+
+	<batch:step id="parentStep" abstract="true">
+		<batch:listeners>
+			<batch:listener ref="stepInterceptor"></batch:listener>
+		</batch:listeners>
+	</batch:step>
+
+	<batch:job id="job">
+		<batch:step id="step" parent="parentStep">
+			<batch:tasklet>
+				<batch:chunk reader="reader" writer="writer" processor="processor"
+					commit-interval="2" skip-limit="2" retry-limit="2">
+					<batch:listeners>
+						<batch:listener ref="chunkInterceptor"></batch:listener>
+						<batch:listener ref="readInterceptor"></batch:listener>
+						<batch:listener ref="writeInterceptor"></batch:listener>
+						<batch:listener ref="processorInterceptor"></batch:listener>
+					</batch:listeners>
+					<batch:skippable-exception-classes>
+						<batch:include class="java.lang.Exception" />
+						<batch:exclude class="java.io.FileNotFoundException" />
+					</batch:skippable-exception-classes>
+					<batch:retryable-exception-classes>
+						<batch:include
+							class="org.springframework.dao.DeadlockLoserDataAccessException" />
+					</batch:retryable-exception-classes>
+				</batch:chunk>
+				<batch:no-rollback-exception-classes>
+					<batch:include
+						class="org.springframework.batch.item.validator.ValidationException" />
+				</batch:no-rollback-exception-classes>
+				<batch:transaction-attributes
+					isolation="DEFAULT" propagation="REQUIRED" timeout="30" />
+			</batch:tasklet>
+		</batch:step>
+	</batch:job>
+</beans>

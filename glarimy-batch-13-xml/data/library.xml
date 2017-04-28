@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<library>
+	<book>
+		<isbn>123</isbn>
+		<title>First Title</title>
+	</book>
+	<book>
+		<isbn>234</isbn>
+		<title>First Title</title>
+	</book>
+	<book>
+		<isbn>456</isbn>
+		<title>First Title</title>
+	</book>
+	<book>
+		<isbn>678</isbn>
+		<title>First Title</title>
+	</book>
+</library>

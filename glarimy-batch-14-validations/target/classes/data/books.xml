@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<books>
+	<book>
+		<isbn>-123</isbn>
+		<title>First Title</title>
+	</book>
+	<book>
+		<isbn>234</isbn>
+		<title>Second Title</title>
+	</book>
+	<book>
+		<isbn>456</isbn>
+		<title>Third Title</title>
+	</book>
+	<book>
+		<isbn>678</isbn>
+		<title>Fourth Title</title>
+	</book>
+</books>
